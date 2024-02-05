@@ -1,0 +1,42 @@
+{
+  "name": "expo-encrypted-storage",
+  "version": "0.1.0",
+  "description": "Secure Storage",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module",
+    "open:ios": "open -a \"Xcode\" example/ios",
+    "open:android": "open -a \"Android Studio\" example/android"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "expo-encrypted-storage",
+    "ExpoEncryptedStorage"
+  ],
+  "repository": "https://github.com/skhye05/expo-encrypted-storage",
+  "bugs": {
+    "url": "https://github.com/skhye05/expo-encrypted-storage/issues"
+  },
+  "author": "Jonathan Mayunga <eljodev@gmail.com> (https://github.com/skhye05)",
+  "license": "MIT",
+  "homepage": "https://github.com/skhye05/expo-encrypted-storage#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.0.25",
+    "expo-module-scripts": "^3.4.0",
+    "expo-modules-core": "^1.11.8"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
