@@ -3,7 +3,8 @@ package expo.modules.encryptedstorage
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import expo.modules.core.Promise
+import expo.modules.kotlin.Promise
+
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -24,17 +25,18 @@ class ExpoEncryptedStorageModule : Module() {
             editor.putString(key, value)
             val saved = editor.commit()
 
+            // return@AsyncFunction value
             if (saved) {
-                promise.resolve(value)
+                promise.resolve(key)
             } else {
-                promise.reject(Exception(String.format("An error occurred while saving %s", key)))
+                promise.reject("500", String.format("An error occurred while removing %s", key), null)
             }
         }
 
-        AsyncFunction("getItemAsync") { key: String, promise: Promise ->
+        AsyncFunction("getItemAsync") { key: String ->
             val value: String? = getPreferences().getString(key, null)
 
-            promise.resolve(value)
+            return@AsyncFunction value
         }
 
         AsyncFunction("removeItemAsync") { key: String, promise: Promise ->
@@ -42,10 +44,11 @@ class ExpoEncryptedStorageModule : Module() {
             editor.remove(key)
             val saved = editor.commit()
 
+            // return@AsyncFunction key
             if (saved) {
                 promise.resolve(key)
             } else {
-                promise.reject(java.lang.Exception(String.format("An error occured while removing %s", key)))
+                promise.reject("500", String.format("An error occurred while removing %s", key), null)
             }
         }
 
@@ -54,10 +57,11 @@ class ExpoEncryptedStorageModule : Module() {
             editor.clear()
             val saved = editor.commit()
 
+            // return@AsyncFunction null
             if (saved) {
                 promise.resolve(null)
             } else {
-                promise.reject(java.lang.Exception("An error occured while clearing SharedPreferences"))
+                promise.reject("500", "An error occurred while clearing SharedPreferences", null)
             }
         }
     }

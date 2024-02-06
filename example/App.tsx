@@ -14,7 +14,7 @@ export default function App() {
    * Saves a random number to the device storage
    * @param {Function} done The function to call when the operation completes
    */
-  async function setValue() {
+  async function setValue(done: WorkCallback) {
     const randomNumber = Math.random();
 
     try {
@@ -27,6 +27,8 @@ export default function App() {
       console.log(error.code);
 
       Alert.alert(`The value ${randomNumber} could not be saved - ${error}`);
+    } finally {
+      done();
     }
   }
 
