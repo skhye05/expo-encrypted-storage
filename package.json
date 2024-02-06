@@ -28,9 +28,9 @@
   "author": "Jonathan Mayunga <eljodev@gmail.com> (https://github.com/skhye05)",
   "license": "MIT",
   "homepage": "https://github.com/skhye05/expo-encrypted-storage#readme",
-  "dependencies": {},
   "devDependencies": {
     "@types/react": "^18.0.25",
+    "babel-plugin-module-resolver": "^5.0.0",
     "expo-module-scripts": "^3.4.0",
     "expo-modules-core": "^1.11.8"
   },

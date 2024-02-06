@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import Security
 
 public class ExpoEncryptedStorageModule: Module {
   // Each module class must implement the definition function. The definition consists of components
@@ -9,36 +10,84 @@ public class ExpoEncryptedStorageModule: Module {
     // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
     // The module will be accessible from `requireNativeModule('ExpoEncryptedStorage')` in JavaScript.
     Name("ExpoEncryptedStorage")
+      
+    AsyncFunction("setItemAsync") { (key:String, value: String, promise: Promise) in
+        // Prepares the insert query structure
+        let storeQuery = [
+          kSecClass       : kSecClassGenericPassword,
+          kSecAttrAccount : key,
+          kSecValueData   : value.data(using: String.Encoding.utf8)!
+        ] as CFDictionary
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants([
-      "PI": Double.pi
-    ])
+        // Deletes the existing item prior to inserting the new one
+        SecItemDelete(storeQuery)
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+        let status = SecItemAdd(storeQuery, nil)
+         
+        if (status == noErr) {
+            promise.resolve(value);
+        } else {
+            let message = SecCopyErrorMessageString(status,nil)! as String
+            promise.reject(String(status), message)
+        }
+    }
+      
+    AsyncFunction("getItemAsync") { (key:String, promise: Promise) in
+        // Prepares the get query structure
+        let query = [
+            kSecClass       : kSecClassGenericPassword,
+            kSecAttrAccount : key,
+            kSecReturnData   : kCFBooleanTrue as Any,
+            kSecMatchLimit  : kSecMatchLimitOne
+        ] as CFDictionary
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      return "Hello world! 👋"
+        var dataTypeRef: AnyObject?
+
+        let status = SecItemCopyMatching(query, &dataTypeRef);
+
+        if status == noErr && dataTypeRef != nil
+        {
+            promise.resolve(String(data: dataTypeRef as! Data, encoding: .utf8))
+        } else {
+            let message = SecCopyErrorMessageString(status,nil)! as String
+            promise.reject(String(status), message)
+        }
+    }
+      
+    AsyncFunction("removeItemAsync") { (key:String, promise: Promise) in
+        // Prepares the remove query structure
+        let query = [
+            kSecClass       : kSecClassGenericPassword,
+            kSecAttrAccount : key,
+            kSecReturnData   : kCFBooleanTrue as Any
+        ] as CFDictionary
+
+        let status = SecItemDelete(query);
+
+        if status == noErr
+        {
+            promise.resolve(key)
+        } else {
+            let message = SecCopyErrorMessageString(status,nil)! as String
+            promise.reject(String(status), message)
+        }
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
-      self.sendEvent("onChange", [
-        "value": value
-      ])
-    }
+    AsyncFunction("clearAsync") { (promise: Promise) in
+        let secItemClasses = [
+            kSecClassGenericPassword,
+            kSecClassInternetPassword,
+            kSecClassCertificate,
+            kSecClassKey,
+            kSecClassIdentity
+        ]
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
-    View(ExpoEncryptedStorageView.self) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { (view: ExpoEncryptedStorageView, prop: String) in
-        print(prop)
-      }
+        for secItemClass in secItemClasses {
+            let spec = [kSecClass as String: secItemClass] as CFDictionary
+            SecItemDelete(spec)
+        }
+
+        promise.resolve(nil)
     }
   }
 }

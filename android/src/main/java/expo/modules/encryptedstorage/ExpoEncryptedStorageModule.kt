@@ -1,47 +1,82 @@
 package expo.modules.encryptedstorage
 
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import expo.modules.core.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 class ExpoEncryptedStorageModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
-  override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoEncryptedStorage')` in JavaScript.
-    Name("ExpoEncryptedStorage")
+    private val SHARED_PREFERENCES_FILENAME = "RN_ENCRYPTED_STORAGE_SHARED_PREF"
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants(
-      "PI" to Math.PI
-    )
+    // Each module class must implement the definition function. The definition consists of components
+    // that describes the module's functionality and behavior.
+    // See https://docs.expo.dev/modules/module-api for more details about available components.
+    override fun definition() = ModuleDefinition {
+        // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
+        // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
+        // The module will be accessible from `requireNativeModule('ExpoEncryptedStorage')` in JavaScript.
+        Name("ExpoEncryptedStorage")
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+        AsyncFunction("setItemAsync") { key: String, value: String, promise: Promise ->
+            val editor: SharedPreferences.Editor = getPreferences().edit()
+            editor.putString(key, value)
+            val saved = editor.commit()
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
+            if (saved) {
+                promise.resolve(value)
+            } else {
+                promise.reject(Exception(String.format("An error occurred while saving %s", key)))
+            }
+        }
+
+        AsyncFunction("getItemAsync") { key: String, promise: Promise ->
+            val value: String? = getPreferences().getString(key, null)
+
+            promise.resolve(value)
+        }
+
+        AsyncFunction("removeItemAsync") { key: String, promise: Promise ->
+            val editor: SharedPreferences.Editor = getPreferences().edit()
+            editor.remove(key)
+            val saved = editor.commit()
+
+            if (saved) {
+                promise.resolve(key)
+            } else {
+                promise.reject(java.lang.Exception(String.format("An error occured while removing %s", key)))
+            }
+        }
+
+        AsyncFunction("clearAsync") { promise: Promise ->
+            val editor: SharedPreferences.Editor = getPreferences().edit()
+            editor.clear()
+            val saved = editor.commit()
+
+            if (saved) {
+                promise.resolve(null)
+            } else {
+                promise.reject(java.lang.Exception("An error occured while clearing SharedPreferences"))
+            }
+        }
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
-    }
+    private val context
+        get() = requireNotNull(appContext.reactContext)
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(ExpoEncryptedStorageView::class) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { view: ExpoEncryptedStorageView, prop: String ->
-        println(prop)
-      }
+    private val key
+        get() = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build();
+
+    private fun getPreferences(): SharedPreferences {
+        return EncryptedSharedPreferences.create(
+                context,
+                this.SHARED_PREFERENCES_FILENAME,
+                key,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
-  }
 }
