@@ -1,6 +1,6 @@
 {
   "name": "expo-encrypted-storage",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Secure Storage",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -21,7 +21,10 @@
     "expo-encrypted-storage",
     "ExpoEncryptedStorage"
   ],
-  "repository": "https://github.com/skhye05/expo-encrypted-storage",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skhye05/expo-encrypted-storage.git"
+  },
   "bugs": {
     "url": "https://github.com/skhye05/expo-encrypted-storage/issues"
   },
